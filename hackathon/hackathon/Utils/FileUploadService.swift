@@ -113,4 +113,68 @@ class FileUploadService {
     task.resume()
   }
 
+  func uploadAudio(filePath: URL, completion: @escaping (Result<(URLResponse, Data?), Error>) -> Void) {
+    // Correct API Endpoint
+    guard let url = URL(string: "http://52.7.92.246:8000/api/v1/audio/analyze") else {
+      completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+      return
+    }
+    
+    // Create URLRequest
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    let boundary = "Boundary-\(UUID().uuidString)"
+    request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+    request.setValue("application/json", forHTTPHeaderField: "accept")
+    
+    // Read the audio file data
+//    let fileUrl = URL(fileURLWithPath: filePath)
+    let fileUrl = filePath
+    guard let audioData = try? Data(contentsOf: fileUrl) else {
+      completion(.failure(NSError(domain: "", code: -2, userInfo: [NSLocalizedDescriptionKey: "Could not read file data"])))
+      return
+    }
+    
+    // Construct Multipart Form Data Body
+    var body = Data()
+    let filename = fileUrl.lastPathComponent
+    let mimetype = "audio/mpeg"
+    
+    body.append("--\(boundary)\r\n".data(using: .utf8)!)
+    body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+    body.append("Content-Type: \(mimetype)\r\n\r\n".data(using: .utf8)!)
+    body.append(audioData)
+    body.append("\r\n".data(using: .utf8)!)
+    body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+    
+    
+    // Perform the request
+    let task = URLSession.shared.uploadTask(with: request, from: body) { responseData, response, error in
+      if let error = error {
+        completion(.failure(error))
+        return
+      }
+      
+      guard let httpResponse = response as? HTTPURLResponse else {
+        completion(.failure(NSError(domain: "", code: -3, userInfo: [NSLocalizedDescriptionKey: "No response received"])))
+        return
+      }
+      
+      // Print JSON Response
+      if let responseData = responseData {
+        if let jsonResponse = try? JSONSerialization.jsonObject(with: responseData, options: .mutableContainers) {
+          print("JSON Response: \(jsonResponse)")
+        } else {
+          print("Failed to parse JSON response")
+        }
+      } else {
+        print("No response data received")
+      }
+      completion(.success((httpResponse, responseData)))
+    }
+    
+    task.resume()
+  }
+
+
 }

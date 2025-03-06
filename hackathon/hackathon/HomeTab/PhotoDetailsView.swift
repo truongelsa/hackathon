@@ -7,6 +7,7 @@ struct PhotoDetailsView: View {
   @StateObject private var audioRecorder = AudioRecorder()
   @State private var isLoading = true
   @State private var isMakeSentenece = false
+  @State private var isAnalyzeAudio = false
   @State private var isHovering: Bool = false
   @State private var showDescription = false
   @State private var contextText: String = ""
@@ -15,6 +16,7 @@ struct PhotoDetailsView: View {
   @State private var sentenceContext: String = ""
   @State private var speakingSentences: [Sentence] = []
   @State private var currentWord: Vocabulary?
+  @State private var scoreText: String = ""
 
   let selectedImage: UIImage?
   var wordListResponse: WordListResponse? = nil
@@ -119,30 +121,6 @@ struct PhotoDetailsView: View {
           }
 
           HStack(spacing: 16) {
-            //            Button(action: {
-            //              if audioRecorder.isRecordingPublished {
-            //                audioRecorder.stopRecording()
-            //              } else {
-            //                audioRecorder.startRecording()
-            //              }
-            //            }) {
-            //              Text(audioRecorder.isRecordingPublished ? "Stop Recording" : "Record")
-            //                .frame(maxWidth: .infinity)
-            //                .padding()
-            //                .background(audioRecorder.isRecordingPublished ? Color.red : Color(hex: "#00004B"))
-            //                .foregroundColor(.white)
-            //                .cornerRadius(8)
-            //            }
-            //            Button(action: {
-            //              audioRecorder.playRecording()
-            //            }) {
-            //              Text("Play")
-            //                .frame(maxWidth: .infinity)
-            //                .padding()
-            //                .background(Color(hex: "#00004B"))
-            //                .foregroundColor(.white)
-            //                .cornerRadius(8)
-            //            }
           }
           .padding(.horizontal)
 
@@ -223,10 +201,23 @@ struct PhotoDetailsView: View {
                 Spacer()
                 Button(action: {
                   print("Microphone button tapped for sentence: \(item.sentence)")
+                  if audioRecorder.isRecordingPublished {
+                    isAnalyzeAudio.toggle()
+                    audioRecorder.stopRecording()
+                    analyzeAudio(url: audioRecorder.getAudioFileURL())
+                  } else {
+                    audioRecorder.startRecording()
+                  }
                 }) {
-                  Image(systemName: "mic.fill")
-                    .foregroundColor(.black)
-                    .padding(8)
+                  if isAnalyzeAudio {
+                    ProgressView()
+                      .progressViewStyle(CircularProgressViewStyle(tint: Color(.lightGray)))
+                      .scaleEffect(2)
+                  } else {
+                    Image(systemName: "mic.fill")
+                      .foregroundColor(audioRecorder.isRecordingPublished ? .red : .black)
+                      .padding(8)
+                  }
                 }
               }
               .overlay(
@@ -237,6 +228,13 @@ struct PhotoDetailsView: View {
                 item.usedVocabulary.forEach { self.usedVocabulary[$0] = true }
               }
             }
+                        
+            Text(scoreText)
+              .frame(maxWidth: .infinity)
+              .padding()
+              .background(Color.blue)
+              .foregroundColor(.white)
+              .cornerRadius(8)
           }
           .padding(.horizontal)
         }
@@ -297,6 +295,27 @@ struct PhotoDetailsView: View {
         }
       case .failure(let error):
         print("Failed to generate sentence: \(error.localizedDescription)")
+      }
+    }
+
+  }
+  
+  private func analyzeAudio(url: URL) {
+    fileUploadService.uploadAudio(filePath: url) { result in
+      isAnalyzeAudio.toggle()
+      switch result {
+      case .success(let response):
+        if let responseData = response.1 {
+          do {
+            let speakingResponse = try JSONDecoder().decode(
+              SpeakingResponse.self, from: responseData)
+            scoreText = "\(speakingResponse.matchPercentage)"
+          } catch {
+            print("Failed to analyze audio: \(error.localizedDescription)")
+          }
+        }
+      case .failure(let error):
+        print("Failed to analyze audio: \(error.localizedDescription)")
       }
     }
 

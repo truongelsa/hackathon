@@ -8,17 +8,15 @@
 import AVFoundation
 import Combine
 
-class AudioRecorder: ObservableObject {
-  private var audioEngine = AVAudioEngine()
-  private var audioFile: AVAudioFile?
-  private var audioFormat: AVAudioFormat?
-  private var isRecording = false
+class AudioRecorder: NSObject, ObservableObject {
+  private var audioRecorder: AVAudioRecorder?
   private let audioSession = AVAudioSession.sharedInstance()
   private var audioPlayer: AVAudioPlayer?
   
   @Published var isRecordingPublished = false
   
-  init() {
+  override init() {
+    super.init()
     setupAudioSession()
   }
   
@@ -27,59 +25,43 @@ class AudioRecorder: ObservableObject {
       try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
       try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     } catch {
-      print("Failed to set up audio session: \(error.localizedDescription)")
+      print("❌ Failed to set up audio session: \(error.localizedDescription)")
     }
   }
   
   func startRecording() {
-    guard !isRecording else { return }
-    
-    let audioNode = audioEngine.inputNode
-    let inputFormat = audioNode.outputFormat(forBus: 0)
-    self.audioFormat = inputFormat
+    guard audioRecorder == nil else { return }
     
     let fileURL = getAudioFileURL()
+    let settings: [String: Any] = [
+      AVFormatIDKey: kAudioFormatLinearPCM,  // ✅ WAV format
+      AVSampleRateKey: 44100,                // Standard sample rate
+      AVNumberOfChannelsKey: 1,              // Mono channel
+      AVLinearPCMBitDepthKey: 16,            // 16-bit depth (CD quality)
+      AVLinearPCMIsBigEndianKey: false,
+      AVLinearPCMIsFloatKey: false
+    ]
     
     do {
-      // Use the inputFormat's settings for consistency.
-      audioFile = try AVAudioFile(forWriting: fileURL, settings: inputFormat.settings)
-    } catch {
-      print("Failed to create audio file: \(error.localizedDescription)")
-      return
-    }
-    
-    audioNode.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] (buffer, _) in
-      guard let self = self else { return }
-      do {
-        try self.audioFile?.write(from: buffer)
-      } catch {
-        print("Error writing audio buffer: \(error.localizedDescription)")
-      }
-    }
-    
-    do {
-      audioEngine.prepare()
-      try audioEngine.start()
-      isRecording = true
+      audioRecorder = try AVAudioRecorder(url: fileURL, settings: settings)
+      audioRecorder?.delegate = self
+      audioRecorder?.prepareToRecord()
+      audioRecorder?.record()
+      
       isRecordingPublished = true
+      print("🎙 Recording started at: \(fileURL.path)")
     } catch {
-      print("Error starting audio engine: \(error.localizedDescription)")
+      print("❌ Error starting recording: \(error.localizedDescription)")
     }
   }
   
   func stopRecording() {
-    guard isRecording else { return }
-    
-    audioEngine.inputNode.removeTap(onBus: 0)
-    audioEngine.stop()
-    do {
-      try audioFile?.close()
-    } catch {
-      print("❌ Error closing audio file: \(error.localizedDescription)")
-    }
-    isRecording = false
+    guard let audioRecorder = audioRecorder else { return }
+    audioRecorder.stop()
+    self.audioRecorder = nil
     isRecordingPublished = false
-    print("Recording stopped. File saved at: \(getAudioFileURL().path)")
+    
+    print("✅ Recording stopped. File saved at: \(getAudioFileURL().path)")
   }
   
   func playRecording() {
@@ -102,9 +84,18 @@ class AudioRecorder: ObservableObject {
     }
   }
   
-  private func getAudioFileURL() -> URL {
-    let fileName = "recording.m4a"
-    let filePath = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-    return filePath
+  func getAudioFileURL() -> URL {
+    let fileName = "recording.wav"  // ✅ Saved as WAV format
+    return FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+  }
+}
+
+extension AudioRecorder: AVAudioRecorderDelegate {
+  func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
+    if flag {
+      print("✅ Recording finished successfully")
+    } else {
+      print("❌ Recording failed")
+    }
   }
 }
