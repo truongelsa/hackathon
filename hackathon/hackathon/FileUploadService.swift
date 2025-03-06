@@ -14,10 +14,9 @@ class FileUploadService {
       completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
       return
     }
-    
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
-    request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+    request.setValue("multipart/form-data", forHTTPHeaderField: "Content-Type")
     
     let task = URLSession.shared.uploadTask(with: request, from: data) { responseData, response, error in
       if let error = error {
@@ -25,12 +24,14 @@ class FileUploadService {
         return
       }
       
-      guard let response = response else {
+      guard let httpResponse = response as? HTTPURLResponse else {
         completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No response from server"])))
         return
       }
       
-      completion(.success(response))
+      print("Status code: \(httpResponse.statusCode)")
+      
+      completion(.success(httpResponse))
     }
     
     task.resume()

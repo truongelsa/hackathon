@@ -4,31 +4,19 @@ import AVFoundation
 struct PhotoDetailsView: View {
   @StateObject private var audioRecorder = AudioRecorder()
   private let fileUploadService = FileUploadService()
+  let selectedImage: UIImage
   
   var body: some View {
     VStack(spacing: 16) {
       // PhotoView
-      if let image = UIImage(named: "your_image_name") {
-        Image(uiImage: image)
-          .resizable()
-          .scaledToFit()
-          .frame(width: 150, height: 150)
-          .overlay(
-            RoundedRectangle(cornerRadius: 8) // Add a rounded rectangle border
-              .stroke(Color.blue, lineWidth: 3) // Blue border with 3pt width
-          )
-      } else {
-        Image(systemName: "flag.fill")
-          .resizable()
-          .scaledToFit()
-          .frame(width: 150, height: 150)
-          .overlay(
-            RoundedRectangle(cornerRadius: 8) // Add a rounded rectangle border
-              .stroke(Color.blue, lineWidth: 3) // Blue border with 3pt width
-          )
-          .foregroundColor(.gray)
-      }
-      
+      Image(uiImage: selectedImage)
+        .resizable()
+        .scaledToFit()
+        .frame(width: 150, height: 150)
+        .overlay(
+          RoundedRectangle(cornerRadius: 8) // Add a rounded rectangle border
+            .stroke(Color.blue, lineWidth: 3) // Blue border with 3pt width
+        )
       // Scroll View
       ScrollView {
         Rectangle()
@@ -94,5 +82,5 @@ struct PhotoDetailsView: View {
 }
 
 #Preview {
-  PhotoDetailsView()
+  PhotoDetailsView(selectedImage: UIImage(systemName: "flag.fill")!)
 }
