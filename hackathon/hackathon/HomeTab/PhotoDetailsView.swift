@@ -11,7 +11,7 @@ struct PhotoDetailsView: View {
   @State private var vocabulary: [Vocabulary] = []
   @State private var sentenceSpeaking: String = ""
 
-  let selectedImage: UIImage
+  let selectedImage: UIImage?
   var wordListResponse: WordListResponse? = nil
 
 
@@ -115,7 +115,6 @@ struct PhotoDetailsView: View {
 
           TagsView(items: vocabulary, lineLimit: 2) { item in
             Button(action: {
-              print("#> call_debug \(item)")
               generateSentence(word: item.word, context: self.contextText ?? "")
             }) {
               Text(item.word)
