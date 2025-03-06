@@ -7,21 +7,21 @@
 
 import Foundation
 
+struct Vocabulary: Codable, Hashable {
+  let definition: String
+  let example: String
+  let word: String
+
+  enum CodingKeys: String, CodingKey {
+    case definition
+    case example
+    case word
+  }
+}
+
 struct WordListResponse: Codable {
   let context: String
   let vocabulary: [Vocabulary]
-  
-  struct Vocabulary: Codable {
-    let definition: String
-    let example: String
-    let word: String
-    
-    enum CodingKeys: String, CodingKey {
-      case definition
-      case example      
-      case word
-    }
-  }
   
   enum CodingKeys: String, CodingKey {
     case context

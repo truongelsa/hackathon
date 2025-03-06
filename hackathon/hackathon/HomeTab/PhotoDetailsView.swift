@@ -6,8 +6,20 @@ struct PhotoDetailsView: View {
   private let fileUploadService = FileUploadService()
   @StateObject private var audioRecorder = AudioRecorder()
   @State private var isLoading = true
-  @State private var contextText: String = "Context: A mountain is on the wall."
-  @State private var wordList: [String] = []
+  @State private var showDescription = false
+  @State private var contextText: String = "In the image, people are gathered in a casual setting, engaged in a tech or coding activity. Laptops with code displayed on the screens are on a table, and there are snacks and water bottles around."
+  @State private var vocabulary: [Vocabulary] = [
+    .init(
+      definition: "the process of assigning a code to something for the purposes of classification or identification", 
+      example: "Coding expertise is essential for developers attending this event.",
+      word: "coding"
+    ),
+    .init(
+      definition: "relating to or using technology, in particular computing",
+      example: "This is a tech event, focusing on coding and programming.",
+      word: "tech"
+    ),
+  ]
 
   let selectedImage: UIImage
 
@@ -33,100 +45,99 @@ struct PhotoDetailsView: View {
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(.white)
       .onAppear {
-        // Delay execution by 2 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
           uploadPhoto(image: selectedImage)
         }
       }
     } else {
       ScrollView {
-        VStack(spacing: 16) {
-          // Description Text
-          Text(
-            "PicLearn lets you snap a photo and instantly learn from it using AI-powered insights. Simply take a picture of text, objects, or equations, and get quick explanations and learning resources!"
-          )
-          .foregroundColor(.black)
-          .padding()
-          .multilineTextAlignment(.center)
+        VStack(spacing: 8) {
+          // Info Button and Description Text
+          HStack {
+            VStack {
+              Button(action: {
+                withAnimation {
+                  showDescription.toggle()
+                }
+              }) {
+                Image(systemName: showDescription ? "info.circle.fill" : "info.circle")
+                  .foregroundColor(.blue)
+              }
+              .padding(.top, 8)
+              Spacer()
+            }
+            Text(
+              !showDescription
+                ? "Show instruction"
+                : "PicLearn lets you snap a photo and instantly learn from it using AI-powered insights. Simply take a picture of text, objects, or equations, and get quick explanations and learning resources!"
+            )
+            .foregroundColor(.black)
+            .multilineTextAlignment(.leading) // Toggle visibility
+            Spacer()
+          }
+          .padding(.horizontal)
 
           // PhotoView
           Image(uiImage: selectedImage)
             .resizable()
             .scaledToFit()
-            .frame(width: 370, height: 150)
+            .frame(maxWidth: .infinity)
+            .frame(height: 300)
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.blue, lineWidth: 3))
+            .padding(.horizontal)
 
-          // Button Row
           HStack(spacing: 16) {
-            Button(action: {
-              if audioRecorder.isRecordingPublished {
-                audioRecorder.stopRecording()
-              } else {
-                audioRecorder.startRecording()
-              }
-            }) {
-              Text(audioRecorder.isRecordingPublished ? "Stop Recording" : "Record")
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(audioRecorder.isRecordingPublished ? Color.red : Color(hex: "#00004B"))
-                .foregroundColor(.white)
-                .cornerRadius(8)
-            }
-            Button(action: {
-              audioRecorder.playRecording()
-            }) {
-              Text("Play")
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color(hex: "#00004B"))
-                .foregroundColor(.white)
-                .cornerRadius(8)
-            }
-            Button(action: {
-              if let image = UIImage(systemName: "flag.fill"),
-                let imageData = image.jpegData(compressionQuality: 1.0)
-              {
-                fileUploadService.uploadPhoto(data: imageData) { result in
-                  switch result {
-                  case .success(let response):
-                    print("Upload successful: \(response)")
-                  case .failure(let error):
-                    print("Upload failed: \(error.localizedDescription)")
-                  }
-                }
-              }
-            }) {
-              Text("Photo")
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color(hex: "#00004B"))
-                .foregroundColor(.white)
-                .cornerRadius(8)
-            }
+//            Button(action: {
+//              if audioRecorder.isRecordingPublished {
+//                audioRecorder.stopRecording()
+//              } else {
+//                audioRecorder.startRecording()
+//              }
+//            }) {
+//              Text(audioRecorder.isRecordingPublished ? "Stop Recording" : "Record")
+//                .frame(maxWidth: .infinity)
+//                .padding()
+//                .background(audioRecorder.isRecordingPublished ? Color.red : Color(hex: "#00004B"))
+//                .foregroundColor(.white)
+//                .cornerRadius(8)
+//            }
+//            Button(action: {
+//              audioRecorder.playRecording()
+//            }) {
+//              Text("Play")
+//                .frame(maxWidth: .infinity)
+//                .padding()
+//                .background(Color(hex: "#00004B"))
+//                .foregroundColor(.white)
+//                .cornerRadius(8)
+//            }
           }
           .padding(.horizontal)
 
-          TagsView(items: wordList, lineLimit: 2) { item in
-            Text(item)
-              .padding()
-              .foregroundColor(.white)
-              .background(Color(hex: "#00004B"))
-              .clipShape(Capsule())
+          TagsView(items: vocabulary, lineLimit: 2) { item in
+            Button(action: {
+
+            }) {
+              Text(item.word)
+                .padding()
+                .foregroundColor(.white)
+                .background(Color(hex: "#00004B"))
+                .clipShape(Capsule())
+            }
           }
-          .frame(width: 300)
+          .frame(maxWidth: .infinity)
 
           // Context Input UI (Newly Added)
           HStack {
             TextEditor(text: $contextText)
-              .frame(height: 200)
+              .frame(height: 100)
               .padding(2)
-              .background(Color(.systemGray6))
+              .foregroundColor(Color(.lightGray))
               .cornerRadius(8)
               .overlay(
                 RoundedRectangle(cornerRadius: 8)
                   .stroke(Color.gray, lineWidth: 0.5)
               )
-              .disabled(true)  // Makes it uneditable like a label
 
             Button(action: {
               print("Microphone button tapped")
@@ -168,8 +179,8 @@ struct PhotoDetailsView: View {
           do {
             let wordListResponse = try JSONDecoder().decode(
               WordListResponse.self, from: responseData)
-            self.wordList = wordListResponse.vocabulary.map({ $0.word })
-            print("#> word list \(self.wordList)")
+            self.vocabulary = wordListResponse.vocabulary
+            self.contextText = wordListResponse.context
           } catch {
             print("Failed to decode WordListResponse: \(error.localizedDescription)")
           }
