@@ -1,27 +1,30 @@
 import SwiftUI
 
 struct ContentView: View {
-  
   var body: some View {
-    NavigationView {
-      VStack(spacing: 16) {
-        // Button Row
-        HStack(spacing: 16) {
-          NavigationLink(destination: PhotoDetailsView(selectedImage: UIImage(systemName: "flag.fill")!)) {
-            Text("Go to sample image")
-              .frame(maxWidth: .infinity)
-              .padding()
-              .background(Color.blue)
-              .foregroundColor(.black)
-              .cornerRadius(8)
-          }
+    TabView {
+      HomeTab()
+        .tabItem {
+          Label("Home", systemImage: "house")
         }
-        .padding(.horizontal)
-      }
-      .frame(maxHeight: .infinity) // Expands VStack to full screen height
-      .background(Color(.lightGray))
-      .ignoresSafeArea() // Ensures background fills the entire screen
+
+      CaptureTab()
+        .tabItem {
+          Label("Capture", systemImage: "camera")
+        }
     }
+  }
+}
+
+struct FocusView: View {
+  @Binding var position: CGPoint
+
+  var body: some View {
+    Circle()
+      .frame(width: 70, height: 70)
+      .foregroundColor(.clear)
+      .border(Color.yellow, width: 1.5)
+      .position(x: position.x, y: position.y)
   }
 }
 
