@@ -3,6 +3,7 @@ import AVFoundation
 
 struct PhotoDetailsView: View {
   @StateObject private var audioRecorder = AudioRecorder()
+  private let fileUploadService = FileUploadService()
   
   var body: some View {
     VStack(spacing: 16) {
@@ -63,7 +64,19 @@ struct PhotoDetailsView: View {
             .foregroundColor(.black)
             .cornerRadius(8)
         }
-        Button(action: {}) {
+        Button(action: {
+          if let image = UIImage(systemName: "flag.fill"),
+             let imageData = image.jpegData(compressionQuality: 1.0) {
+            fileUploadService.uploadPhoto(data: imageData) { result in
+              switch result {
+              case .success(let response):
+                print("Upload successful: \(response)")
+              case .failure(let error):
+                print("Upload failed: \(error.localizedDescription)")
+              }
+            }
+          }
+        }) {
           Text("Photo")
             .frame(maxWidth: .infinity)
             .padding()

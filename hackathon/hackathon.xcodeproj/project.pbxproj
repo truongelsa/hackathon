@@ -29,9 +29,22 @@
 		91F7FD8F2D7824BE00F05C36 /* hackathonUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hackathonUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		91F7FDC52D79639B00F05C36 /* Exceptions for "hackathon" folder in "hackathon" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 91F7FD742D7824BD00F05C36 /* hackathon */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		91F7FD772D7824BD00F05C36 /* hackathon */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				91F7FDC52D79639B00F05C36 /* Exceptions for "hackathon" folder in "hackathon" target */,
+			);
 			path = hackathon;
 			sourceTree = "<group>";
 		};
@@ -399,6 +412,7 @@
 				DEVELOPMENT_TEAM = DQ47627WZ6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = hackathon/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to the microphone so we can record your voice to check your pronunciation.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Choose a photo to use for your ELSA profile.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose a photo to use for your ELSA profile.";
@@ -431,6 +445,7 @@
 				DEVELOPMENT_TEAM = DQ47627WZ6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = hackathon/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to the microphone so we can record your voice to check your pronunciation.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Choose a photo to use for your ELSA profile.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose a photo to use for your ELSA profile.";
