@@ -8,6 +8,8 @@ struct PhotoDetailsView: View {
   private let fileUploadService = FileUploadService()
   let selectedImage: UIImage
 
+  @State private var wordList: [String] = ["Word 1", "Word 2", "Word 3", "Word 4", "Word 5"]
+  
   var body: some View {
     ScrollView {
       VStack(spacing: 16) {
@@ -72,7 +74,16 @@ struct PhotoDetailsView: View {
               .cornerRadius(8)
           }
         }
-        .padding(.horizontal)
+        .padding(.horizontal)                
+
+        TagsView(items: wordList, lineLimit: 2) { item in
+            Text(item)
+                .padding()
+                .foregroundColor(.white)
+                .background(Color(hex: "#00004B"))
+                .clipShape(Capsule())
+        }
+        .frame(width: 300)
         
         // Context Input UI (Newly Added)
         HStack {
@@ -102,18 +113,41 @@ struct PhotoDetailsView: View {
           .padding()
           .multilineTextAlignment(.center)
       }
+      .frame(maxWidth: .infinity)
+      .background(Color(.white))
+      .onAppear {
+        // Delay execution by 2 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+          uploadPhoto(image: selectedImage)
+        }
+      }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(Color(.white))
   }
+  
+  private func uploadPhoto(image: UIImage) {
+    guard let imageData = image.jpegData(compressionQuality: 0.3) else {
+      print("Failed to get JPEG data from image")
+      return
+    }
+    
+    fileUploadService.uploadPhoto(data: imageData) { result in
+      switch result {
+      case .success(let response):
+        print("Upload successful: \(response)")
+      case .failure(let error):
+        print("Upload failed: \(error.localizedDescription)")
+      }
+    }
+  }
+  
 }
 
 
 #Preview {
   PhotoDetailsView(selectedImage: UIImage(systemName: "flag.fill")!)
 }
-
-
 
 extension Color {
   init(hex: String) {
