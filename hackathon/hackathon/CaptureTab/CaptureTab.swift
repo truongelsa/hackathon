@@ -99,11 +99,8 @@ struct CaptureTab: View {
         .padding(.vertical, 100)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
-      .background(Color(.lightGray))
+      .background(Color(.white))
       .ignoresSafeArea()
-      .tabItem {
-        Label("Learn", systemImage: "star")
-      }
     }
   }
   

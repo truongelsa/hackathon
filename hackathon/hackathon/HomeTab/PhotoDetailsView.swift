@@ -3,11 +3,11 @@ import AVFoundation
 
 struct PhotoDetailsView: View {
   @StateObject private var audioRecorder = AudioRecorder()
-  private let fileUploadService = FileUploadService()
-  let selectedImage: UIImage
   @State private var contextText: String = "Context: A mountain is on the wall."
 
-  
+  private let fileUploadService = FileUploadService()
+  let selectedImage: UIImage
+
   var body: some View {
     ScrollView {
       VStack(spacing: 16) {
@@ -102,9 +102,9 @@ struct PhotoDetailsView: View {
           .padding()
           .multilineTextAlignment(.center)
       }
-      .frame(maxWidth: .infinity)
-      .background(Color(.white))
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(Color(.white))
   }
 }
 

@@ -24,7 +24,7 @@ struct HomeTab: View {
         .padding(.horizontal)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
-      .background(Color(.lightGray))
+      .background(Color(.white))
       .ignoresSafeArea()
     }
   }

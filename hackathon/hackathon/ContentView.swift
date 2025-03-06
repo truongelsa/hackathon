@@ -13,6 +13,7 @@ struct ContentView: View {
           Label("Capture", systemImage: "camera")
         }
     }
+    .foregroundStyle(Color(.lightGray))
   }
 }
 
