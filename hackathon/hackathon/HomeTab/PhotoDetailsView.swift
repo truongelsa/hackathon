@@ -7,21 +7,13 @@ struct PhotoDetailsView: View {
   @StateObject private var audioRecorder = AudioRecorder()
   @State private var isLoading = true
   @State private var showDescription = false
-  @State private var contextText: String = "In the image, people are gathered in a casual setting, engaged in a tech or coding activity. Laptops with code displayed on the screens are on a table, and there are snacks and water bottles around."
-  @State private var vocabulary: [Vocabulary] = [
-    .init(
-      definition: "the process of assigning a code to something for the purposes of classification or identification", 
-      example: "Coding expertise is essential for developers attending this event.",
-      word: "coding"
-    ),
-    .init(
-      definition: "relating to or using technology, in particular computing",
-      example: "This is a tech event, focusing on coding and programming.",
-      word: "tech"
-    ),
-  ]
+  @State private var contextText: String = ""
+  @State private var vocabulary: [Vocabulary] = []
+  @State private var sentenceSpeaking: String = ""
 
-  let selectedImage: UIImage?
+  let selectedImage: UIImage
+  var wordListResponse: WordListResponse? = nil
+
 
   var body: some View {
     if isLoading {
@@ -123,7 +115,8 @@ struct PhotoDetailsView: View {
 
           TagsView(items: vocabulary, lineLimit: 2) { item in
             Button(action: {
-
+              print("#> call_debug \(item)")
+              generateSentence(word: item.word, context: self.contextText ?? "")
             }) {
               Text(item.word)
                 .padding()
@@ -157,7 +150,14 @@ struct PhotoDetailsView: View {
           .padding(.horizontal)
 
           Text(
-            "Feedback: Great effort! You scored 70% on pronunciation. Focus on improving a few sounds for better clarity keep practicing, and you'll get"
+            sentenceSpeaking
+          )
+          .foregroundColor(.cyan)
+          .padding()
+          .multilineTextAlignment(.center)
+          
+          Text(
+            "Score:"
           )
           .foregroundColor(.black)
           .padding()
@@ -197,10 +197,33 @@ struct PhotoDetailsView: View {
       }
     }
   }
+  
+  private func generateSentence(word: String, context: String) {
+    fileUploadService.generateSentenceFromWord(word, context: context) { result in
+      switch result {
+      case .success(let response):
+        isLoading = false
+        if let responseData = response.1 {
+          do {
+            let sentenceResponse = try JSONDecoder().decode(
+              SentenceResponse.self, from: responseData)
+            self.sentenceSpeaking = sentenceResponse.sentences.first?.sentence ?? ""
+            print("generate successful: \(sentenceResponse)")
+          } catch {
+            print("Failed to decode sentenceResponse: \(error.localizedDescription)")
+          }
+        }
+      case .failure(let error):
+        print("Upload failed: \(error.localizedDescription)")
+      }
+    }
+    
+  }
+
 }
 
 #Preview {
-  PhotoDetailsView(selectedImage: UIImage(systemName: "flag.fill")!)
+  PhotoDetailsView(selectedImage: UIImage(systemName: "flag.fill")!, wordListResponse: nil)
 }
 
 extension Color {

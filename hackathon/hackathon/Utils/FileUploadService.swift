@@ -53,4 +53,64 @@ class FileUploadService {
     
     task.resume()
   }
+  
+  func generateSentenceFromWord(_ word: String, context: String, completion: @escaping (Result<(URLResponse, Data?), Error>) -> Void) {
+    // API Endpoint
+    guard let url = URL(string: "http://52.7.92.246:8000/api/v1/sentences/generate") else {
+      completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+      return
+    }
+    
+    // JSON Body
+    let requestBody: [String: Any] = [
+      "words": [word],
+      "context": context,
+      "count": 1,
+    ]
+    
+    
+    // Convert request body to JSON data
+    guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else {
+      completion(.failure(NSError(domain: "", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid JSON"])))
+      return
+    }
+    
+    // Create URLRequest
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "accept")
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.httpBody = jsonData
+    
+    // Perform network request
+    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+      if let error = error {
+        completion(.failure(error))
+        return
+      }
+      
+      guard let response = response else {
+        completion(.failure(NSError(domain: "", code: -3, userInfo: [NSLocalizedDescriptionKey: "No response received"])))
+        return
+      }
+      
+      // Print JSON Response
+      if let data = data {
+        do {
+          let jsonObject = try JSONSerialization.jsonObject(with: data)
+          print("JSON Response:\n", jsonObject)
+        } catch {
+          print("Failed to parse JSON response: \(error)")
+        }
+      } else {
+        print("No response data received")
+      }
+      
+      // Return response and data
+      completion(.success((response, data)))
+    }
+    
+    task.resume()
+  }
+
 }
