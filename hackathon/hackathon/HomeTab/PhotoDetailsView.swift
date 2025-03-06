@@ -7,12 +7,14 @@ struct PhotoDetailsView: View {
   @StateObject private var audioRecorder = AudioRecorder()
   @State private var isLoading = true
   @State private var isMakeSentenece = false
+  @State private var isHovering: Bool = false
   @State private var showDescription = false
   @State private var contextText: String = ""
   @State private var vocabulary: [Vocabulary] = []
   @State private var usedVocabulary: [String: Bool] = [:]
   @State private var sentenceContext: String = ""
   @State private var speakingSentences: [Sentence] = []
+  @State private var currentWord: Vocabulary?
 
   let selectedImage: UIImage?
   var wordListResponse: WordListResponse? = nil
@@ -79,13 +81,42 @@ struct PhotoDetailsView: View {
           .padding(.horizontal)
 
           // PhotoView
-          Image(uiImage: selectedImage ?? UIImage())
-            .resizable()
-            .scaledToFit()
+          ZStack {
+            VStack(alignment: .center, spacing: 10) {
+              if let currentWord {
+                VStack(alignment: .center) {
+                  Text(currentWord.word)
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.black)
+                  Text(currentWord.definition)
+                    .font(.body)
+                    .foregroundStyle(.black)
+                  Text(currentWord.example)
+                    .font(.caption)
+                    .foregroundStyle(.black)
+                }
+                .padding()
+              }
+            }
             .frame(maxWidth: .infinity)
             .frame(height: 300)
+            .background(Color.blue)
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "#00004B"), lineWidth: 3))
             .padding(.horizontal)
+            .modifier(FlipOpacity(pct: isHovering ? 1 : 0))
+            .rotation3DEffect(Angle.degrees(isHovering ? 0 : 180), axis: (0, 1, 0))
+
+            Image(uiImage: selectedImage ?? UIImage())
+              .resizable()
+              .scaledToFit()
+              .frame(maxWidth: .infinity)
+              .frame(height: 300)
+              .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "#00004B"), lineWidth: 3))
+              .padding(.horizontal)
+              .modifier(FlipOpacity(pct: isHovering ? 0 : 1))
+              .rotation3DEffect(Angle.degrees(isHovering ? 180 : 360), axis: (0, 1, 0))
+          }
 
           HStack(spacing: 16) {
             //            Button(action: {
@@ -128,6 +159,21 @@ struct PhotoDetailsView: View {
                 )
                 .clipShape(Capsule())
             }
+            .simultaneousGesture(
+              DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                  currentWord = item
+                  withAnimation(Animation.linear(duration: 0.4)) {
+                    isHovering = true
+                  }
+                }
+                .onEnded { _ in
+                  currentWord = nil
+                  withAnimation(Animation.linear(duration: 0.4)) {
+                    isHovering = false
+                  }
+                }
+            )
           }
           .frame(maxWidth: .infinity)
 
