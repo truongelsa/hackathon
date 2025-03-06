@@ -7,16 +7,18 @@
 
 import Foundation
 
+
+struct Sentence: Codable, Hashable {
+  let sentence: String
+  let usedVocabulary: [String]
+
+  enum CodingKeys: String, CodingKey {
+    case sentence
+    case usedVocabulary = "used_vocabulary"
+  }
+}
+
 struct SentenceResponse: Codable {
   let sentences: [Sentence]
-  
-  struct Sentence: Codable {
-    let sentence: String
-    let usedVocabulary: [String]
-    
-    enum CodingKeys: String, CodingKey {
-      case sentence
-      case usedVocabulary = "used_vocabulary"
-    }
-  }
+
 }

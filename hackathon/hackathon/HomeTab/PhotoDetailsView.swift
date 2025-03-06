@@ -6,14 +6,16 @@ struct PhotoDetailsView: View {
   private let fileUploadService = FileUploadService()
   @StateObject private var audioRecorder = AudioRecorder()
   @State private var isLoading = true
+  @State private var isMakeSentenece = false
   @State private var showDescription = false
   @State private var contextText: String = ""
   @State private var vocabulary: [Vocabulary] = []
-  @State private var sentenceSpeaking: String = ""
+  @State private var usedVocabulary: [String: Bool] = [:]
+  @State private var sentenceContext: String = ""
+  @State private var speakingSentences: [Sentence] = []
 
   let selectedImage: UIImage?
   var wordListResponse: WordListResponse? = nil
-
 
   var body: some View {
     if isLoading {
@@ -71,7 +73,7 @@ struct PhotoDetailsView: View {
                 : "PicLearn lets you snap a photo and instantly learn from it using AI-powered insights. Simply take a picture of text, objects, or equations, and get quick explanations and learning resources!"
             )
             .foregroundColor(.black)
-            .multilineTextAlignment(.leading) // Toggle visibility
+            .multilineTextAlignment(.leading)  // Toggle visibility
             Spacer()
           }
           .padding(.horizontal)
@@ -82,45 +84,48 @@ struct PhotoDetailsView: View {
             .scaledToFit()
             .frame(maxWidth: .infinity)
             .frame(height: 300)
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.blue, lineWidth: 3))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "#00004B"), lineWidth: 3))
             .padding(.horizontal)
 
           HStack(spacing: 16) {
-//            Button(action: {
-//              if audioRecorder.isRecordingPublished {
-//                audioRecorder.stopRecording()
-//              } else {
-//                audioRecorder.startRecording()
-//              }
-//            }) {
-//              Text(audioRecorder.isRecordingPublished ? "Stop Recording" : "Record")
-//                .frame(maxWidth: .infinity)
-//                .padding()
-//                .background(audioRecorder.isRecordingPublished ? Color.red : Color(hex: "#00004B"))
-//                .foregroundColor(.white)
-//                .cornerRadius(8)
-//            }
-//            Button(action: {
-//              audioRecorder.playRecording()
-//            }) {
-//              Text("Play")
-//                .frame(maxWidth: .infinity)
-//                .padding()
-//                .background(Color(hex: "#00004B"))
-//                .foregroundColor(.white)
-//                .cornerRadius(8)
-//            }
+            //            Button(action: {
+            //              if audioRecorder.isRecordingPublished {
+            //                audioRecorder.stopRecording()
+            //              } else {
+            //                audioRecorder.startRecording()
+            //              }
+            //            }) {
+            //              Text(audioRecorder.isRecordingPublished ? "Stop Recording" : "Record")
+            //                .frame(maxWidth: .infinity)
+            //                .padding()
+            //                .background(audioRecorder.isRecordingPublished ? Color.red : Color(hex: "#00004B"))
+            //                .foregroundColor(.white)
+            //                .cornerRadius(8)
+            //            }
+            //            Button(action: {
+            //              audioRecorder.playRecording()
+            //            }) {
+            //              Text("Play")
+            //                .frame(maxWidth: .infinity)
+            //                .padding()
+            //                .background(Color(hex: "#00004B"))
+            //                .foregroundColor(.white)
+            //                .cornerRadius(8)
+            //            }
           }
           .padding(.horizontal)
 
           TagsView(items: vocabulary, lineLimit: 2) { item in
             Button(action: {
-              generateSentence(word: item.word, context: self.contextText ?? "")
+              usedVocabulary[item.word] = !(usedVocabulary[item.word] ?? true)
             }) {
               Text(item.word)
                 .padding()
                 .foregroundColor(.white)
-                .background(Color(hex: "#00004B"))
+                .background(
+                  (usedVocabulary[item.word] ?? false)
+                    ? Color(hex: "#00004B") : Color(hex: "#00004B").opacity(0.3)
+                )
                 .clipShape(Capsule())
             }
           }
@@ -131,36 +136,63 @@ struct PhotoDetailsView: View {
             TextEditor(text: $contextText)
               .frame(height: 100)
               .padding(2)
-              .foregroundColor(Color(.lightGray))
+              .foregroundColor(Color.black)
               .cornerRadius(8)
               .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                  .stroke(Color.gray, lineWidth: 0.5)
+                  .stroke(Color.blue.opacity(0.8), lineWidth: 0.5)
               )
-
-            Button(action: {
-              print("Microphone button tapped")
-            }) {
-              Image(systemName: "mic.fill")
-                .foregroundColor(.black)
-                .padding(8)
-            }
           }
           .padding(.horizontal)
 
-          Text(
-            sentenceSpeaking
-          )
-          .foregroundColor(.cyan)
+          Button(action: {
+            isMakeSentenece.toggle()
+            let words: [String] = usedVocabulary.filter { $1 }.keys.sorted()
+            generateSentence(words: words, context: contextText)
+          }) {
+            if isMakeSentenece {
+              ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: Color(.lightGray)))
+                .scaleEffect(2)
+            } else {
+              Text("Make a scentence")
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+            }
+          }
           .padding()
-          .multilineTextAlignment(.center)
-          
-          Text(
-            "Score:"
-          )
-          .foregroundColor(.black)
-          .padding()
-          .multilineTextAlignment(.center)
+
+          VStack {
+            ForEach(speakingSentences, id: \.self) { item in
+              HStack {
+                VStack {
+                  Text(item.sentence)
+                    .foregroundColor(.cyan)
+                    .padding()
+                    .multilineTextAlignment(.leading)
+                }
+                Spacer()
+                Button(action: {
+                  print("Microphone button tapped for sentence: \(item.sentence)")
+                }) {
+                  Image(systemName: "mic.fill")
+                    .foregroundColor(.black)
+                    .padding(8)
+                }
+              }
+              .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                  .stroke(Color.cyan.opacity(0.8), lineWidth: 0.5)
+              )
+              .onTapGesture {
+                item.usedVocabulary.forEach { self.usedVocabulary[$0] = true }
+              }
+            }
+          }
+          .padding(.horizontal)
         }
         .frame(maxWidth: .infinity)
         .background(Color(.white))
@@ -186,6 +218,9 @@ struct PhotoDetailsView: View {
             let wordListResponse = try JSONDecoder().decode(
               WordListResponse.self, from: responseData)
             self.vocabulary = wordListResponse.vocabulary
+            wordListResponse.vocabulary.forEach { item in
+              self.usedVocabulary[item.word] = false
+            }
             self.contextText = wordListResponse.context
           } catch {
             print("Failed to decode WordListResponse: \(error.localizedDescription)")
@@ -196,27 +231,29 @@ struct PhotoDetailsView: View {
       }
     }
   }
-  
-  private func generateSentence(word: String, context: String) {
-    fileUploadService.generateSentenceFromWord(word, context: context) { result in
+
+  private func generateSentence(words: [String], context: String) {
+    fileUploadService.generateSentenceFromWord(words, context: context) { result in
+      isMakeSentenece.toggle()
       switch result {
       case .success(let response):
-        isLoading = false
         if let responseData = response.1 {
           do {
             let sentenceResponse = try JSONDecoder().decode(
               SentenceResponse.self, from: responseData)
-            self.sentenceSpeaking = sentenceResponse.sentences.first?.sentence ?? ""
-            print("generate successful: \(sentenceResponse)")
+            if let bestSentence = sentenceResponse.sentences.first {
+              sentenceContext = bestSentence.sentence
+              speakingSentences.append(bestSentence)
+            }
           } catch {
             print("Failed to decode sentenceResponse: \(error.localizedDescription)")
           }
         }
       case .failure(let error):
-        print("Upload failed: \(error.localizedDescription)")
+        print("Failed to generate sentence: \(error.localizedDescription)")
       }
     }
-    
+
   }
 
 }

@@ -1,10 +1,4 @@
 import PhotosUI
-//
-//  HomeTab.swift
-//  hackathon
-//
-//  Created by Nhat T. Nguyen on 6/3/25.
-//
 import SwiftUI
 
 struct HomeTab: View {

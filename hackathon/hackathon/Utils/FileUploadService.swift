@@ -54,7 +54,7 @@ class FileUploadService {
     task.resume()
   }
   
-  func generateSentenceFromWord(_ word: String, context: String, completion: @escaping (Result<(URLResponse, Data?), Error>) -> Void) {
+  func generateSentenceFromWord(_ word: [String], context: String, completion: @escaping (Result<(URLResponse, Data?), Error>) -> Void) {
     // API Endpoint
     guard let url = URL(string: "http://52.7.92.246:8000/api/v1/sentences/generate") else {
       completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
@@ -63,7 +63,7 @@ class FileUploadService {
     
     // JSON Body
     let requestBody: [String: Any] = [
-      "words": [word],
+      "words": word,
       "context": context,
       "count": 1,
     ]
