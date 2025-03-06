@@ -21,7 +21,7 @@ struct PhotoDetailsView: View {
     ),
   ]
 
-  let selectedImage: UIImage
+  let selectedImage: UIImage?
 
   var body: some View {
     if isLoading {
@@ -45,8 +45,15 @@ struct PhotoDetailsView: View {
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(.white)
       .onAppear {
+        // Using to mock UI
+        if selectedImage == nil {
+          isLoading = false
+          return
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-          uploadPhoto(image: selectedImage)
+          if let selectedImage {
+            uploadPhoto(image: selectedImage)
+          }
         }
       }
     } else {
@@ -78,7 +85,7 @@ struct PhotoDetailsView: View {
           .padding(.horizontal)
 
           // PhotoView
-          Image(uiImage: selectedImage)
+          Image(uiImage: selectedImage ?? UIImage())
             .resizable()
             .scaledToFit()
             .frame(maxWidth: .infinity)
