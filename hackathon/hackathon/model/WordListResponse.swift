@@ -7,28 +7,25 @@
 
 import Foundation
 
-struct WordListResponse: Encodable {
+struct WordListResponse: Codable {
   let context: String
-  let imageUrl: String
   let vocabulary: [Vocabulary]
   
-  struct Vocabulary: Encodable {
+  struct Vocabulary: Codable {
     let definition: String
     let example: String
-    let partOfSpeech: String
     let word: String
     
     enum CodingKeys: String, CodingKey {
       case definition
-      case example
-      case partOfSpeech = "part_of_speech"
+      case example      
       case word
     }
   }
   
   enum CodingKeys: String, CodingKey {
     case context
-    case imageUrl = "image_url"
     case vocabulary
   }
 }
+

@@ -117,7 +117,7 @@ struct PhotoDetailsView: View {
       .background(Color(.white))
       .onAppear {
         // Delay execution by 2 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
           uploadPhoto(image: selectedImage)
         }
       }
@@ -136,6 +136,15 @@ struct PhotoDetailsView: View {
       switch result {
       case .success(let response):
         print("Upload successful: \(response)")
+        if let responseData = response.1 {
+          do {
+            let wordListResponse = try JSONDecoder().decode(WordListResponse.self, from: responseData)
+            self.wordList = wordListResponse.vocabulary.map({ $0.word })
+            print("#> word list \(self.wordList)")
+          } catch {
+            print("Failed to decode WordListResponse: \(error.localizedDescription)")
+          }
+        }
       case .failure(let error):
         print("Upload failed: \(error.localizedDescription)")
       }
