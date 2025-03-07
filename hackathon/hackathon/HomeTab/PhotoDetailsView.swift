@@ -202,10 +202,18 @@ struct PhotoDetailsView: View {
                     .foregroundColor(.cyan)
                     .multilineTextAlignment(.leading)
                   if let score = speakingSentence.score {
-                    Text(score)
-                      .foregroundColor(Color(hex: "#00004B"))
-                      .fontWeight(.bold)
-                      .multilineTextAlignment(.leading)
+                    HStack {
+                      Spacer()
+                      VStack {
+                        Text("Score: \(score)%")
+                          .foregroundColor(Color(hex: "#00004B"))
+                          .fontWeight(.bold)
+                          .multilineTextAlignment(.center)
+                          .padding()
+                      }
+                      .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "#00004B"), lineWidth: 3))
+                      Spacer()
+                    }
                   }
                   if let feedback = speakingSentence.feedback {
                     Text(feedback)
@@ -222,6 +230,7 @@ struct PhotoDetailsView: View {
                   if isAnalyzeAudio {
                     ProgressView()
                       .progressViewStyle(CircularProgressViewStyle(tint: Color(.lightGray)))
+                      .padding()
                   } else {
                     Image(systemName: "mic.fill")
                       .foregroundColor(.black)
