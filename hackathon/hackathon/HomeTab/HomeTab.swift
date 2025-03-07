@@ -38,6 +38,21 @@ struct HomeTab: View {
                   .background(Color.gray.opacity(0.2))
                   .cornerRadius(8)
                   .clipped()
+                  .overlay {
+                    VStack() {
+                      Spacer()
+                      HStack(alignment: .bottom, spacing: 4) {
+                        Spacer()
+                        Text("999+")
+                          .foregroundStyle(.white)
+                          .fontWeight(.bold)
+                        Image(systemName: "heart.fill")
+                          .foregroundStyle(.pink)
+                          .padding(.trailing, 4)
+                      }
+                    }
+                    .padding(.bottom, 4)
+                  }
               }
               Button(action: {
                 let size = CGSize(width: 1024, height: 1024)
@@ -51,6 +66,21 @@ struct HomeTab: View {
                   .background(Color.gray.opacity(0.2))
                   .cornerRadius(8)
                   .clipped()
+                  .overlay {
+                    VStack() {
+                      Spacer()
+                      HStack(alignment: .bottom, spacing: 4) {
+                        Spacer()
+                        Text("999+")
+                          .foregroundStyle(.white)
+                          .fontWeight(.bold)
+                        Image(systemName: "heart.fill")
+                          .foregroundStyle(.pink)
+                          .padding(.trailing, 4)
+                      }
+                    }
+                    .padding(.bottom, 4)
+                  }
               }
             }
           }
@@ -133,18 +163,16 @@ extension PhotosPickerItem {
 }
 
 extension Image {
-    @MainActor
-    func getUIImage(newSize: CGSize) -> UIImage? {
-        let image = resizable()
-            .scaledToFill()
-            .frame(width: newSize.width, height: newSize.height)
-            .clipped()
-        return ImageRenderer(content: image).uiImage
-    }
+  @MainActor
+  func getUIImage(newSize: CGSize) -> UIImage? {
+    let image = resizable()
+      .scaledToFill()
+      .frame(width: newSize.width, height: newSize.height)
+      .clipped()
+    return ImageRenderer(content: image).uiImage
+  }
 }
 
 #Preview {
   HomeTab()
 }
-
-

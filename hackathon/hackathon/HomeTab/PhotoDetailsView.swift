@@ -11,12 +11,15 @@ struct PhotoDetailsView: View {
 
   private let fileUploadService = FileUploadService()
   @StateObject private var audioRecorder = AudioRecorder()
+  @State private var canEdit = false
   @State private var isLoading = true
   @State private var isMakeSentenece = false
   @State private var isAnalyzeAudio = false
   @State private var isHovering: Bool = false
   @State private var showDescription = false
   @State private var contextText: String = ""
+  @State private var contextTextScore: String?
+  @State private var contextTextFeedback: String?
   @State private var vocabulary: [Vocabulary] = []
   @State private var usedVocabulary: [String: Bool] = [:]
   @State private var sentenceContext: String = ""
@@ -172,8 +175,69 @@ struct PhotoDetailsView: View {
                 RoundedRectangle(cornerRadius: 8)
                   .stroke(Color.blue.opacity(0.8), lineWidth: 0.5)
               )
+              .disabled(!canEdit)
+              .padding(.top, 20)
+            VStack {
+              Button(action: {
+                print("Microphone button tapped for sentence: \(contextText)")
+              }) {
+                if isAnalyzeAudio {
+                  ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: Color(.lightGray)))
+                } else {
+                  Image(systemName: "mic.fill")
+                    .foregroundColor(.black)
+                    .padding()
+                }
+              }
+              .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                  .onChanged { _ in
+                    audioRecorder.startRecording()
+                  }
+                  .onEnded { _ in
+                    audioRecorder.stopRecording()
+                    analyzeAudio(
+                      for: .init(sentence: contextText, usedVocabulary: []) ,
+                      url: audioRecorder.getAudioFileURL(),
+                      isContext: true
+                    )
+                  }
+              )
+              Button(action: {
+                speak(sentence: contextText)
+              }) {
+                Image(systemName: "speaker.fill")
+                  .foregroundColor(.black)
+              }
+            }
+            .frame(width: 40)
           }
           .padding(.horizontal)
+
+          VStack(alignment: .center, spacing: 8) {
+            if let score = contextTextScore {
+              HStack {
+                Spacer()
+                VStack {
+                  Text("Score: \(score)%")
+                    .foregroundColor(Color(hex: "#00004B"))
+                    .fontWeight(.bold)
+                    .multilineTextAlignment(.center)
+                    .padding()
+                }
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "#00004B"), lineWidth: 3))
+                Spacer()
+              }
+            }
+            if let feedback = contextTextFeedback {
+              Text(feedback)
+                .foregroundColor(.green)
+                .fontWeight(.semibold)
+                .multilineTextAlignment(.leading)
+            }
+          }
+          .padding()
 
           Button(action: {
             isMakeSentenece.toggle()
@@ -185,7 +249,7 @@ struct PhotoDetailsView: View {
                 .progressViewStyle(CircularProgressViewStyle(tint: Color(.lightGray)))
                 .scaleEffect(2)
             } else {
-              Text("Make a scentence")
+              Text("Practice More")
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(Color.blue)
@@ -197,7 +261,7 @@ struct PhotoDetailsView: View {
 
           VStack {
             ForEach(speakingSentences, id: \.self) { speakingSentence in
-              HStack {
+              HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 8) {
                   Text(speakingSentence.item.sentence)
                     .foregroundColor(.cyan)
@@ -252,6 +316,7 @@ struct PhotoDetailsView: View {
                     speak(sentence: speakingSentence.item.sentence)
                   }) {
                     Image(systemName: "speaker.fill")
+                      .foregroundColor(.black)
                   }
                 }
               }
@@ -332,11 +397,15 @@ struct PhotoDetailsView: View {
 
   }
   
-  private func analyzeAudio(for sentence: Sentence, url: URL) {
+  private func analyzeAudio(for sentence: Sentence, url: URL, isContext: Bool = false) {
     isAnalyzeAudio = true
     fileUploadService.uploadAudio(filePath: url) { (score, feedback) in
       isAnalyzeAudio = false
       if let score, let feedback {
+        if isContext {
+          contextTextScore = score
+          contextTextFeedback = feedback
+        }
         if let index = speakingSentences.firstIndex(where: { $0.item.sentence == sentence.sentence }) {
           speakingSentences.remove(at: index)
           speakingSentences.insert(.init(item: sentence, score: score, feedback: feedback), at: index)
