@@ -113,10 +113,10 @@ class FileUploadService {
     task.resume()
   }
 
-  func uploadAudio(filePath: URL, completion: @escaping (String?) -> Void) {
+  func uploadAudio(filePath: URL, completion: @escaping (String?, String?) -> Void) {
     // Correct API Endpoint
     guard let url = URL(string: "http://52.7.92.246:8000/api/v1/audio/analyze") else {      
-      completion(nil)
+      completion(nil, nil)
       return
     }
     
@@ -131,7 +131,7 @@ class FileUploadService {
 //    let fileUrl = URL(fileURLWithPath: filePath)
     let fileUrl = filePath
     guard let audioData = try? Data(contentsOf: fileUrl) else {
-      completion(nil)
+      completion(nil, nil)
       return
     }
     
@@ -151,12 +151,12 @@ class FileUploadService {
     // Perform the request
     let task = URLSession.shared.uploadTask(with: request, from: body) { responseData, response, error in
       if let error = error {
-        completion(nil)
+        completion(nil, nil)
         return
       }
       
       guard let httpResponse = response as? HTTPURLResponse else {
-        completion(nil)
+        completion(nil, nil)
         return
       }
       
@@ -165,8 +165,10 @@ class FileUploadService {
         if let jsonResponse = try? JSONSerialization.jsonObject(with: responseData, options: .mutableContainers) {
           print("JSON Response: \(jsonResponse)")
           if let jsonDict = jsonResponse as? [String: Any] {
+            var matchPercentageString: String?
+            var feedbackText: String?
+
             if let matchPercentage = jsonDict["match_percentage"] {
-                var matchPercentageString: String?
                 if let matchPercentageInt = matchPercentage as? Int {
                     matchPercentageString = String(matchPercentageInt)
                 } else if let matchPercentageDouble = matchPercentage as? Double {
@@ -174,15 +176,13 @@ class FileUploadService {
                 } else if let matchPercentageStr = matchPercentage as? String {
                     matchPercentageString = matchPercentageStr
                 }
-                if let matchPercentageString = matchPercentageString {
-                    completion(matchPercentageString)
-                    return
-                }
             }
+            feedbackText = jsonDict["feedback"] as? String
+            completion(matchPercentageString, feedbackText)
           }
         }
         print("Failed to parse JSON response")
-        completion(nil)
+        completion(nil, nil)
       }
     }
     

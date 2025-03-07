@@ -1,6 +1,12 @@
 import AVFoundation
 import SwiftUI
 
+struct SpeakingSentence: Hashable {
+  let item: Sentence
+  let score: String?
+  let feedback: String?
+}
+
 struct PhotoDetailsView: View {
 
   private let fileUploadService = FileUploadService()
@@ -14,9 +20,8 @@ struct PhotoDetailsView: View {
   @State private var vocabulary: [Vocabulary] = []
   @State private var usedVocabulary: [String: Bool] = [:]
   @State private var sentenceContext: String = ""
-  @State private var speakingSentences: [Sentence] = []
+  @State private var speakingSentences: [SpeakingSentence] = []
   @State private var currentWord: Vocabulary?
-  @State private var scoreText: String = ""
 
   let selectedImage: UIImage?
   var wordListResponse: WordListResponse? = nil
@@ -190,51 +195,58 @@ struct PhotoDetailsView: View {
           .padding()
 
           VStack {
-            ForEach(speakingSentences, id: \.self) { item in
+            ForEach(speakingSentences, id: \.self) { speakingSentence in
               HStack {
-                VStack {
-                  Text(item.sentence)
+                VStack(alignment: .leading, spacing: 8) {
+                  Text(speakingSentence.item.sentence)
                     .foregroundColor(.cyan)
-                    .padding()
                     .multilineTextAlignment(.leading)
+                  if let score = speakingSentence.score {
+                    Text(score)
+                      .foregroundColor(Color(hex: "#00004B"))
+                      .fontWeight(.bold)
+                      .multilineTextAlignment(.leading)
+                  }
+                  if let feedback = speakingSentence.feedback {
+                    Text(feedback)
+                      .foregroundColor(.green)
+                      .fontWeight(.semibold)
+                      .multilineTextAlignment(.leading)
+                  }
                 }
+                .padding()
                 Spacer()
                 Button(action: {
-                  print("Microphone button tapped for sentence: \(item.sentence)")
-                  if audioRecorder.isRecordingPublished {
-                    isAnalyzeAudio.toggle()
-                    audioRecorder.stopRecording()
-                    analyzeAudio(url: audioRecorder.getAudioFileURL())
-                  } else {
-                    audioRecorder.startRecording()
-                  }
+                  print("Microphone button tapped for sentence: \(speakingSentence.item.sentence)")
                 }) {
                   if isAnalyzeAudio {
                     ProgressView()
                       .progressViewStyle(CircularProgressViewStyle(tint: Color(.lightGray)))
-                      .scaleEffect(2)
                   } else {
                     Image(systemName: "mic.fill")
-                      .foregroundColor(audioRecorder.isRecordingPublished ? .red : .black)
-                      .padding(8)
+                      .foregroundColor(.black)
+                      .padding()
                   }
                 }
+                .simultaneousGesture(
+                  DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                      audioRecorder.startRecording()
+                    }
+                    .onEnded { _ in
+                      audioRecorder.stopRecording()
+                      analyzeAudio(for: speakingSentence.item , url: audioRecorder.getAudioFileURL())
+                    }
+                )
               }
               .overlay(
                 RoundedRectangle(cornerRadius: 8)
                   .stroke(Color.cyan.opacity(0.8), lineWidth: 0.5)
               )
               .onTapGesture {
-                item.usedVocabulary.forEach { self.usedVocabulary[$0] = true }
+                speakingSentence.item.usedVocabulary.forEach { self.usedVocabulary[$0] = true }
               }
             }
-                        
-            Text(scoreText)
-              .frame(maxWidth: .infinity)
-              .padding()
-              .background(Color.blue)
-              .foregroundColor(.white)
-              .cornerRadius(8)
           }
           .padding(.horizontal)
         }
@@ -287,7 +299,11 @@ struct PhotoDetailsView: View {
               SentenceResponse.self, from: responseData)
             if let bestSentence = sentenceResponse.sentences.first {
               sentenceContext = bestSentence.sentence
-              speakingSentences.append(bestSentence)
+              speakingSentences.append(.init(
+                item: bestSentence,
+                score: nil,
+                feedback: nil
+              ))
             }
           } catch {
             print("Failed to decode sentenceResponse: \(error.localizedDescription)")
@@ -300,11 +316,15 @@ struct PhotoDetailsView: View {
 
   }
   
-  private func analyzeAudio(url: URL) {
-    fileUploadService.uploadAudio(filePath: url) { result in
-      isAnalyzeAudio.toggle()
-      if let score = result {
-        scoreText = "Scored: \(score)"
+  private func analyzeAudio(for sentence: Sentence, url: URL) {
+    isAnalyzeAudio = true
+    fileUploadService.uploadAudio(filePath: url) { (score, feedback) in
+      isAnalyzeAudio = false
+      if let score, let feedback {
+        if let index = speakingSentences.firstIndex(where: { $0.item.sentence == sentence.sentence }) {
+          speakingSentences.remove(at: index)
+          speakingSentences.insert(.init(item: sentence, score: score, feedback: feedback), at: index)
+        }
       }
     }
   }
