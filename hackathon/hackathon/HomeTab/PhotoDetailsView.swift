@@ -303,24 +303,11 @@ struct PhotoDetailsView: View {
   private func analyzeAudio(url: URL) {
     fileUploadService.uploadAudio(filePath: url) { result in
       isAnalyzeAudio.toggle()
-      switch result {
-      case .success(let response):
-        if let responseData = response.1 {
-          do {
-            let speakingResponse = try JSONDecoder().decode(
-              SpeakingResponse.self, from: responseData)
-            scoreText = "\(speakingResponse.matchPercentage)"
-          } catch {
-            print("Failed to analyze audio: \(error.localizedDescription)")
-          }
-        }
-      case .failure(let error):
-        print("Failed to analyze audio: \(error.localizedDescription)")
+      if let score = result {
+        scoreText = "Scored: \(score)"
       }
     }
-
   }
-
 }
 
 #Preview {
