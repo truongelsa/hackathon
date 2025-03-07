@@ -22,6 +22,7 @@ struct PhotoDetailsView: View {
   @State private var sentenceContext: String = ""
   @State private var speakingSentences: [SpeakingSentence] = []
   @State private var currentWord: Vocabulary?
+  private let speechSynthesizer = AVSpeechSynthesizer()
 
   let selectedImage: UIImage?
   var wordListResponse: WordListResponse? = nil
@@ -224,29 +225,35 @@ struct PhotoDetailsView: View {
                 }
                 .padding()
                 Spacer()
-                Button(action: {
-                  print("Microphone button tapped for sentence: \(speakingSentence.item.sentence)")
-                }) {
-                  if isAnalyzeAudio {
-                    ProgressView()
-                      .progressViewStyle(CircularProgressViewStyle(tint: Color(.lightGray)))
-                      .padding()
-                  } else {
-                    Image(systemName: "mic.fill")
-                      .foregroundColor(.black)
-                      .padding()
+                VStack {
+                  Button(action: {
+                    print("Microphone button tapped for sentence: \(speakingSentence.item.sentence)")
+                  }) {
+                    if isAnalyzeAudio {
+                      ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color(.lightGray)))
+                    } else {
+                      Image(systemName: "mic.fill")
+                        .foregroundColor(.black)
+                        .padding()
+                    }
+                  }
+                  .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                      .onChanged { _ in
+                        audioRecorder.startRecording()
+                      }
+                      .onEnded { _ in
+                        audioRecorder.stopRecording()
+                        analyzeAudio(for: speakingSentence.item , url: audioRecorder.getAudioFileURL())
+                      }
+                  )
+                  Button(action: {
+                    speak(sentence: speakingSentence.item.sentence)
+                  }) {
+                    Image(systemName: "speaker.fill")
                   }
                 }
-                .simultaneousGesture(
-                  DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                      audioRecorder.startRecording()
-                    }
-                    .onEnded { _ in
-                      audioRecorder.stopRecording()
-                      analyzeAudio(for: speakingSentence.item , url: audioRecorder.getAudioFileURL())
-                    }
-                )
               }
               .overlay(
                 RoundedRectangle(cornerRadius: 8)
@@ -336,6 +343,15 @@ struct PhotoDetailsView: View {
         }
       }
     }
+  }
+  
+  func speak(sentence: String) {
+      let speechUtterance = AVSpeechUtterance(string: sentence)
+      
+      speechUtterance.voice = AVSpeechSynthesisVoice(language: "en-US") // Change language if needed
+      speechUtterance.rate = AVSpeechUtteranceDefaultSpeechRate // Adjust speed if necessary
+      
+      speechSynthesizer.speak(speechUtterance)
   }
 }
 
