@@ -29,7 +29,7 @@ struct HomeTab: View {
               Button(action: {
                 let size = CGSize(width: 1024, height: 1024)
                 selectedData = Image("Hackathon").getUIImage(newSize: size)?.pngData() ?? Data()
-                navigateToDetails = true
+//                navigateToDetails = true
               }) {
                 Image("Hackathon")
                   .resizable()
@@ -57,7 +57,7 @@ struct HomeTab: View {
               Button(action: {
                 let size = CGSize(width: 1024, height: 1024)
                 selectedData = Image("DiepAndAmbuth").getUIImage(newSize: size)?.pngData() ?? Data()
-                navigateToDetails = true
+//                navigateToDetails = true
               }) {
                 Image("DiepAndAmbuth")
                   .resizable()
@@ -96,6 +96,9 @@ struct HomeTab: View {
           loadImages()
         }
       }
+      .onChange(of: selectedData) { _ in
+        navigateToDetails = true
+      }
       .background(navigationLink)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -116,7 +119,7 @@ struct HomeTab: View {
           Button(action: {
             let size = CGSize(width: 1024, height: 1024)
             selectedData = selectedImages[i].getUIImage(newSize: size)?.pngData() ?? Data()
-            navigateToDetails = true
+//            navigateToDetails = true
           }) {
             selectedImages[i]
               .resizable()
@@ -137,7 +140,6 @@ struct HomeTab: View {
       for item in selectedItems {
         if let image = try? await item.loadTransferable(type: Image.self) {
           selectedImages.append(image)
-          self.selectedData = await item.makeData()
         }
       }
     }

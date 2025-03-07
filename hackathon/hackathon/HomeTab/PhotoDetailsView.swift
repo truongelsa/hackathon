@@ -129,10 +129,6 @@ struct PhotoDetailsView: View {
               .rotation3DEffect(Angle.degrees(isHovering ? 180 : 360), axis: (0, 1, 0))
           }
 
-          HStack(spacing: 16) {
-          }
-          .padding(.horizontal)
-
           TagsView(items: vocabulary, lineLimit: 2) { item in
             Button(action: {
               usedVocabulary[item.word] = !(usedVocabulary[item.word] ?? true)
@@ -163,6 +159,17 @@ struct PhotoDetailsView: View {
             )
           }
           .frame(maxWidth: .infinity)
+
+          HStack(spacing: 8) {
+            Spacer()
+            Image(systemName: showDescription ? "info.circle.fill" : "info.circle")
+              .foregroundColor(.blue)
+            .padding(.top, 8)
+            Text("Hold to Speak")
+              .foregroundColor(.black)
+              .multilineTextAlignment(.leading)
+          }
+          .padding(.horizontal)
 
           // Context Input UI (Newly Added)
           HStack {
@@ -245,7 +252,13 @@ struct PhotoDetailsView: View {
 
           Button(action: {
             isMakeSentenece.toggle()
-            let words: [String] = usedVocabulary.filter { $1 }.keys.sorted()
+            var words: [String] = usedVocabulary.filter { $1 }.keys.sorted()
+            if usedVocabulary.keys.contains("group") {
+              words.append("ELSA Hackathon event")
+            }
+            if usedVocabulary.keys.contains("flower") || usedVocabulary.keys.contains("roses") || usedVocabulary.keys.contains("rose") {
+              words.append("Happy International Women Day")
+            }
             generateSentence(words: words, context: contextText)
           }) {
             if isMakeSentenece {
@@ -293,7 +306,7 @@ struct PhotoDetailsView: View {
                 }
                 .padding()
                 Spacer()
-                VStack {
+                VStack(spacing: 10) {
                   Button(action: {
                     print("Microphone button tapped for sentence: \(speakingSentence.item.sentence)")
                   }) {
@@ -306,13 +319,16 @@ struct PhotoDetailsView: View {
                         .padding()
                     }
                   }
+                  .frame(width: 50)
                   .simultaneousGesture(
                     DragGesture(minimumDistance: 0)
                       .onChanged { _ in
                         audioRecorder.startRecording()
+                        audioRecorder.playMicStart()
                       }
                       .onEnded { _ in
                         audioRecorder.stopRecording()
+                        audioRecorder.playMicStop()
                         analyzeAudio(for: speakingSentence.item , url: audioRecorder.getAudioFileURL())
                       }
                   )
@@ -322,7 +338,9 @@ struct PhotoDetailsView: View {
                     Image(systemName: "speaker.fill")
                       .foregroundColor(.black)
                   }
+                  .frame(width: 50)
                 }
+                .frame(width: 40)
               }
               .overlay(
                 RoundedRectangle(cornerRadius: 8)
