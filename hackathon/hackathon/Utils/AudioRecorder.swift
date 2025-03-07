@@ -84,6 +84,38 @@ class AudioRecorder: NSObject, ObservableObject {
     }
   }
   
+  func playMicStart() {
+    guard let micStartSoundURL = Bundle.main.url(forResource: "mic_start_sound", withExtension: "mp3") else {
+      print("❌ mic_start_sound.mp3 file not found")
+      return
+    }
+    
+    do {
+      audioPlayer = try AVAudioPlayer(contentsOf: micStartSoundURL)
+      audioPlayer?.prepareToPlay()
+      audioPlayer?.play()
+      print("🎵 Playing mic start sound...")
+    } catch {
+      print("❌ Failed to play mic start sound: \(error.localizedDescription)")
+    }
+  }
+
+  func playMicStop() {
+    guard let micStartSoundURL = Bundle.main.url(forResource: "mic_stop_sound", withExtension: "mp3") else {
+      print("❌ mic_start_sound.mp3 file not found")
+      return
+    }
+    
+    do {
+      audioPlayer = try AVAudioPlayer(contentsOf: micStartSoundURL)
+      audioPlayer?.prepareToPlay()
+      audioPlayer?.play()
+      print("🎵 Playing mic start sound...")
+    } catch {
+      print("❌ Failed to play mic start sound: \(error.localizedDescription)")
+    }
+  }
+  
   func getAudioFileURL() -> URL {
     let fileName = "recording.wav"  // ✅ Saved as WAV format
     return FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
