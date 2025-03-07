@@ -83,7 +83,7 @@ struct PhotoDetailsView: View {
             Text(
               !showDescription
                 ? "Show instruction"
-                : "PicLearn lets you snap a photo and instantly learn from it using AI-powered insights. Simply take a picture of text, objects, or equations, and get quick explanations and learning resources!"
+                : "Snap-And-Learn lets you snap a photo and instantly learn from it using AI-powered insights. Simply take a picture of text, objects, or equations, and get quick explanations and learning resources!"
             )
             .foregroundColor(.black)
             .multilineTextAlignment(.leading)  // Toggle visibility
@@ -103,7 +103,7 @@ struct PhotoDetailsView: View {
                   Text(currentWord.definition)
                     .font(.body)
                     .foregroundStyle(.black)
-                  Text(currentWord.example)
+                  Text("Example: \(currentWord.example)")
                     .font(.caption)
                     .foregroundStyle(.black)
                 }
@@ -177,7 +177,7 @@ struct PhotoDetailsView: View {
               )
               .disabled(!canEdit)
               .padding(.top, 20)
-            VStack {
+            VStack(spacing: 10) {
               Button(action: {
                 print("Microphone button tapped for sentence: \(contextText)")
               }) {
@@ -194,9 +194,11 @@ struct PhotoDetailsView: View {
                 DragGesture(minimumDistance: 0)
                   .onChanged { _ in
                     audioRecorder.startRecording()
+                    audioRecorder.playMicStart()
                   }
                   .onEnded { _ in
                     audioRecorder.stopRecording()
+                    audioRecorder.playMicStop()
                     analyzeAudio(
                       for: .init(sentence: contextText, usedVocabulary: []) ,
                       url: audioRecorder.getAudioFileURL(),
@@ -204,12 +206,14 @@ struct PhotoDetailsView: View {
                     )
                   }
               )
+              .frame(width: 50)
               Button(action: {
                 speak(sentence: contextText)
               }) {
                 Image(systemName: "speaker.fill")
                   .foregroundColor(.black)
               }
+              .frame(width: 50)
             }
             .frame(width: 40)
           }
